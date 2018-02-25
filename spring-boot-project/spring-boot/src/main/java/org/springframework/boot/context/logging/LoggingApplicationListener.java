@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 	 */
 	public static final String LOGGING_SYSTEM_BEAN_NAME = "springBootLoggingSystem";
 
-	private static MultiValueMap<LogLevel, String> LOG_LEVEL_LOGGERS;
+	private static final MultiValueMap<LogLevel, String> LOG_LEVEL_LOGGERS;
 
 	private static AtomicBoolean shutdownHookRegistered = new AtomicBoolean(false);
 
@@ -125,11 +125,11 @@ public class LoggingApplicationListener implements GenericApplicationListener {
 		LOG_LEVEL_LOGGERS.add(LogLevel.DEBUG, "org.hibernate.SQL");
 	}
 
-	private static Class<?>[] EVENT_TYPES = { ApplicationStartingEvent.class,
+	private static final Class<?>[] EVENT_TYPES = { ApplicationStartingEvent.class,
 			ApplicationEnvironmentPreparedEvent.class, ApplicationPreparedEvent.class,
 			ContextClosedEvent.class, ApplicationFailedEvent.class };
 
-	private static Class<?>[] SOURCE_TYPES = { SpringApplication.class,
+	private static final Class<?>[] SOURCE_TYPES = { SpringApplication.class,
 			ApplicationContext.class };
 
 	private final Log logger = LogFactory.getLog(getClass());

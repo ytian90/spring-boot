@@ -17,10 +17,10 @@ if [[ $RELEASE_TYPE = "M" ]]; then
 	stageVersion=$( get_next_milestone_release $snapshotVersion)
 	nextVersion=$snapshotVersion
 elif [[ $RELEASE_TYPE = "RC" ]]; then
-	stage=$( get_next_rc_release $snapshotVersion)
+	stageVersion=$( get_next_rc_release $snapshotVersion)
 	nextVersion=$snapshotVersion
 elif [[ $RELEASE_TYPE = "RELEASE" ]]; then
-	stage=$( strip_snapshot_suffix $snapshotVersion)
+	stageVersion=$( strip_snapshot_suffix $snapshotVersion)
 	nextVersion=$( bump_version_number $snapshotVersion)
 else
 	echo "Unknown release type $RELEASE_TYPE" >&2; exit 1;
@@ -36,7 +36,7 @@ git commit -m"Release v$stageVersion" > /dev/null
 git tag -a "v$stageVersion" -m"Release v$stageVersion" > /dev/null
 
 run_maven -f spring-boot-project/pom.xml clean deploy -U -Dfull -DaltDeploymentRepository=distribution::default::file://${repository}
-run_maven -f spring-boot-tests/spring-boot-sample-tests/pom.xml clean install -U -Dfull -Drepository=file://${repository}
+run_maven -f spring-boot-samples/pom.xml clean install -U -Dfull -Drepository=file://${repository}
 run_maven -f spring-boot-tests/spring-boot-integration-tests/pom.xml clean install -U -Dfull -Drepository=file://${repository}
 run_maven -f spring-boot-tests/spring-boot-deployment-tests/pom.xml clean install -U -Dfull -Drepository=file://${repository}
 

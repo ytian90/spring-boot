@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
-import org.springframework.mock.http.server.reactive.MockServerWebExchange;
+import org.springframework.mock.web.server.MockServerWebExchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,8 +50,9 @@ public class MustacheViewTests {
 	}
 
 	@Test
-	public void viewResolvesHandlebars() throws Exception {
-		this.exchange = MockServerHttpRequest.get("/test").toExchange();
+	public void viewResolvesHandlebars() {
+		this.exchange = MockServerWebExchange
+				.from(MockServerHttpRequest.get("/test").build());
 		MustacheView view = new MustacheView();
 		view.setCompiler(Mustache.compiler());
 		view.setUrl(this.templateUrl);

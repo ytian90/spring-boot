@@ -17,7 +17,6 @@
 package org.springframework.boot.web.embedded.tomcat;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -28,7 +27,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 import org.apache.catalina.core.StandardContext;
-import org.apache.catalina.loader.WebappClassLoader;
+import org.apache.catalina.loader.ParallelWebappClassLoader;
 import org.apache.catalina.webresources.StandardRoot;
 import org.apache.catalina.webresources.WarResourceSet;
 import org.junit.Rule;
@@ -73,7 +72,7 @@ public class TomcatEmbeddedWebappClassLoaderTests {
 			throws Exception {
 		URLClassLoader parent = new URLClassLoader(
 				new URL[] { new URL(webInfClassesUrlString(war)) }, null);
-		try (WebappClassLoader classLoader = new TomcatEmbeddedWebappClassLoader(
+		try (ParallelWebappClassLoader classLoader = new TomcatEmbeddedWebappClassLoader(
 				parent)) {
 			StandardContext context = new StandardContext();
 			context.setName("test");
@@ -92,7 +91,7 @@ public class TomcatEmbeddedWebappClassLoaderTests {
 		return "jar:file:" + war.getAbsolutePath() + "!/WEB-INF/classes/";
 	}
 
-	private File createWar() throws IOException, FileNotFoundException {
+	private File createWar() throws IOException {
 		File warFile = this.temp.newFile("test.war");
 		try (JarOutputStream warOut = new JarOutputStream(
 				new FileOutputStream(warFile))) {

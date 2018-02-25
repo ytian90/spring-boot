@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,20 +41,20 @@ public class OriginTrackedYamlLoaderTests {
 	private Map<String, Object> result;
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		Resource resource = new ClassPathResource("test-yaml.yml", getClass());
-		this.loader = new OriginTrackedYamlLoader(resource, null);
+		this.loader = new OriginTrackedYamlLoader(resource, null, (profile) -> true);
 	}
 
 	@Test
-	public void processSimpleKey() throws Exception {
+	public void processSimpleKey() {
 		OriginTrackedValue value = getValue("name");
 		assertThat(value.toString()).isEqualTo("Martin D'vloper");
 		assertThat(getLocation(value)).isEqualTo("3:7");
 	}
 
 	@Test
-	public void processMap() throws Exception {
+	public void processMap() {
 		OriginTrackedValue perl = getValue("languages.perl");
 		OriginTrackedValue python = getValue("languages.python");
 		OriginTrackedValue pascal = getValue("languages.pascal");
@@ -67,7 +67,7 @@ public class OriginTrackedYamlLoaderTests {
 	}
 
 	@Test
-	public void processCollection() throws Exception {
+	public void processCollection() {
 		OriginTrackedValue apple = getValue("foods[0]");
 		OriginTrackedValue orange = getValue("foods[1]");
 		OriginTrackedValue strawberry = getValue("foods[2]");
@@ -83,7 +83,7 @@ public class OriginTrackedYamlLoaderTests {
 	}
 
 	@Test
-	public void processMultiline() throws Exception {
+	public void processMultiline() {
 		OriginTrackedValue education = getValue("education");
 		assertThat(education.toString())
 				.isEqualTo("4 GCSEs\n3 A-Levels\nBSc in the Internet of Things\n");
@@ -91,15 +91,16 @@ public class OriginTrackedYamlLoaderTests {
 	}
 
 	@Test
-	public void processWithActiveProfile() throws Exception {
+	public void processWithActiveProfile() {
 		Resource resource = new ClassPathResource("test-yaml.yml", getClass());
-		this.loader = new OriginTrackedYamlLoader(resource, "development");
+		this.loader = new OriginTrackedYamlLoader(resource, "development",
+				(profile) -> true);
 		Map<String, Object> result = this.loader.load();
 		assertThat(result.get("name").toString()).isEqualTo("Test Name");
 	}
 
 	@Test
-	public void processListOfMaps() throws Exception {
+	public void processListOfMaps() {
 		OriginTrackedValue name = getValue("example.foo[0].name");
 		OriginTrackedValue url = getValue("example.foo[0].url");
 		OriginTrackedValue bar1 = getValue("example.foo[0].bar[0].bar1");
@@ -112,6 +113,16 @@ public class OriginTrackedYamlLoaderTests {
 		assertThat(getLocation(bar1)).isEqualTo("25:19");
 		assertThat(bar2.toString()).isEqualTo("bling");
 		assertThat(getLocation(bar2)).isEqualTo("26:19");
+	}
+
+	@Test
+	public void processEmptyAndNullValues() {
+		OriginTrackedValue empty = getValue("empty");
+		OriginTrackedValue nullValue = getValue("null-value");
+		assertThat(empty.getValue()).isEqualTo("");
+		assertThat(getLocation(empty)).isEqualTo("27:8");
+		assertThat(nullValue.getValue()).isEqualTo("");
+		assertThat(getLocation(nullValue)).isEqualTo("28:13");
 	}
 
 	private OriginTrackedValue getValue(String name) {

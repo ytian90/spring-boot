@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,22 @@
 
 package org.springframework.boot.web.embedded.netty;
 
+import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import reactor.ipc.netty.http.server.HttpServer;
+import reactor.ipc.netty.http.server.HttpServerOptions.Builder;
 
 import org.springframework.boot.web.reactive.server.AbstractReactiveWebServerFactory;
 import org.springframework.boot.web.reactive.server.ReactiveWebServerFactory;
 import org.springframework.boot.web.server.WebServer;
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter;
+import org.springframework.util.Assert;
 
 /**
  * {@link ReactiveWebServerFactory} that can be used to create {@link NettyWebServer}s.
@@ -31,6 +40,10 @@ import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter;
  * @since 2.0.0
  */
 public class NettyReactiveWebServerFactory extends AbstractReactiveWebServerFactory {
+
+	private List<NettyServerCustomizer> serverCustomizers = new ArrayList<>();
+
+	private Duration lifecycleTimeout;
 
 	public NettyReactiveWebServerFactory() {
 	}
@@ -41,21 +54,74 @@ public class NettyReactiveWebServerFactory extends AbstractReactiveWebServerFact
 
 	@Override
 	public WebServer getWebServer(HttpHandler httpHandler) {
-		HttpServer server = createHttpServer();
+		HttpServer httpServer = createHttpServer();
 		ReactorHttpHandlerAdapter handlerAdapter = new ReactorHttpHandlerAdapter(
 				httpHandler);
-		return new NettyWebServer(server, handlerAdapter);
+		return new NettyWebServer(httpServer, handlerAdapter, this.lifecycleTimeout);
+	}
+
+	/**
+	 * Returns a mutable collection of the {@link NettyServerCustomizer}s that will be
+	 * applied to the Netty server builder.
+	 * @return the customizers that will be applied
+	 */
+	public Collection<NettyServerCustomizer> getServerCustomizers() {
+		return this.serverCustomizers;
+	}
+
+	/**
+	 * Set {@link NettyServerCustomizer}s that should be applied to the Netty server
+	 * builder. Calling this method will replace any existing customizers.
+	 * @param serverCustomizers the customizers to set
+	 */
+	public void setServerCustomizers(
+			Collection<? extends NettyServerCustomizer> serverCustomizers) {
+		Assert.notNull(serverCustomizers, "ServerCustomizers must not be null");
+		this.serverCustomizers = new ArrayList<>(serverCustomizers);
+	}
+
+	/**
+	 * Add {@link NettyServerCustomizer}s that should applied while building the server.
+	 * @param serverCustomizers the customizers to add
+	 */
+	public void addServerCustomizers(NettyServerCustomizer... serverCustomizers) {
+		Assert.notNull(serverCustomizers, "ServerCustomizer must not be null");
+		this.serverCustomizers.addAll(Arrays.asList(serverCustomizers));
+	}
+
+	/**
+	 * Set the maximum amount of time that should be waited when starting or stopping the
+	 * server.
+	 * @param lifecycleTimeout the lifecycle timeout
+	 */
+	public void setLifecycleTimeout(Duration lifecycleTimeout) {
+		this.lifecycleTimeout = lifecycleTimeout;
 	}
 
 	private HttpServer createHttpServer() {
-		HttpServer server;
+		return HttpServer.builder().options((options) -> {
+			options.listenAddress(getListenAddress());
+			if (getSsl() != null && getSsl().isEnabled()) {
+				SslServerCustomizer sslServerCustomizer = new SslServerCustomizer(
+						getSsl(), getSslStoreProvider());
+				sslServerCustomizer.customize(options);
+			}
+			if (getCompression() != null && getCompression().getEnabled()) {
+				options.compression(getCompression().getMinResponseSize());
+			}
+			applyCustomizers(options);
+		}).build();
+	}
+
+	private InetSocketAddress getListenAddress() {
 		if (getAddress() != null) {
-			server = HttpServer.create(getAddress().getHostAddress(), getPort());
+			return new InetSocketAddress(getAddress().getHostAddress(), getPort());
 		}
-		else {
-			server = HttpServer.create(getPort());
-		}
-		return server;
+		return new InetSocketAddress(getPort());
+	}
+
+	private void applyCustomizers(Builder options) {
+		this.serverCustomizers.forEach((customizer) -> customizer.customize(options));
 	}
 
 }

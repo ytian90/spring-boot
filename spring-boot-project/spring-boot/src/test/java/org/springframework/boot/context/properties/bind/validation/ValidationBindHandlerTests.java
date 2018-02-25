@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class ValidationBindHandlerTests {
 	}
 
 	@Test
-	public void bindShouldValidateNestedProperties() throws Exception {
+	public void bindShouldValidateNestedProperties() {
 		this.sources.add(new MockConfigurationPropertySource("foo.nested.age", 4));
 		this.thrown.expect(BindException.class);
 		this.thrown.expectCause(instanceOf(BindValidationException.class));
@@ -106,7 +106,7 @@ public class ValidationBindHandlerTests {
 	}
 
 	@Test
-	public void bindShouldFailWithAccessToBoundProperties() throws Exception {
+	public void bindShouldFailWithAccessToBoundProperties() {
 		MockConfigurationPropertySource source = new MockConfigurationPropertySource();
 		source.put("foo.nested.name", "baz");
 		source.put("foo.nested.age", "4");
@@ -122,17 +122,17 @@ public class ValidationBindHandlerTests {
 	}
 
 	@Test
-	public void bindShouldFailWithAccessToName() throws Exception {
+	public void bindShouldFailWithAccessToName() {
 		this.sources.add(new MockConfigurationPropertySource("foo.nested.age", "4"));
 		BindValidationException cause = bindAndExpectValidationError(
 				() -> this.binder.bind(ConfigurationPropertyName.of("foo"),
 						Bindable.of(ExampleValidatedWithNestedBean.class), this.handler));
-		assertThat(cause.getValidationErrors().getName().toString())
-				.isEqualTo("foo.nested");
+		assertThat(cause.getValidationErrors().getName().toString()).isEqualTo("foo");
+		assertThat(cause.getMessage()).contains("nested.age");
 	}
 
 	@Test
-	public void bindShouldFailIfExistingValueIsInvalid() throws Exception {
+	public void bindShouldFailIfExistingValueIsInvalid() {
 		ExampleValidatedBean existingValue = new ExampleValidatedBean();
 		BindValidationException cause = bindAndExpectValidationError(
 				() -> this.binder.bind(ConfigurationPropertyName.of("foo"), Bindable
@@ -144,11 +144,13 @@ public class ValidationBindHandlerTests {
 	}
 
 	@Test
-	public void bindShouldNotValidateWithoutAnnotation() throws Exception {
+	public void bindShouldValidateWithoutAnnotation() {
 		ExampleNonValidatedBean existingValue = new ExampleNonValidatedBean();
-		this.binder.bind(ConfigurationPropertyName.of("foo"), Bindable
-				.of(ExampleNonValidatedBean.class).withExistingValue(existingValue),
-				this.handler);
+		bindAndExpectValidationError(
+				() -> this.binder.bind(ConfigurationPropertyName.of("foo"),
+						Bindable.of(ExampleNonValidatedBean.class)
+								.withExistingValue(existingValue),
+						this.handler));
 	}
 
 	private BindValidationException bindAndExpectValidationError(Runnable action) {
@@ -156,8 +158,6 @@ public class ValidationBindHandlerTests {
 			action.run();
 		}
 		catch (BindException ex) {
-			ex.printStackTrace();
-
 			BindValidationException cause = (BindValidationException) ex.getCause();
 			return cause;
 		}

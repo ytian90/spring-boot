@@ -36,25 +36,23 @@ public class OAuth2ClientRegistrationRepositoryConfigurationTests {
 	private static final String REGISTRATION_PREFIX = "spring.security.oauth2.client.registration";
 
 	@Test
-	public void clientRegistrationRepositoryBeanShouldNotBeCreatedWhenPropertiesAbsent()
-			throws Exception {
+	public void clientRegistrationRepositoryBeanShouldNotBeCreatedWhenPropertiesAbsent() {
 		this.contextRunner
 				.withUserConfiguration(
 						OAuth2ClientRegistrationRepositoryConfiguration.class)
-				.run(context -> assertThat(context)
+				.run((context) -> assertThat(context)
 						.doesNotHaveBean(ClientRegistrationRepository.class));
 	}
 
 	@Test
-	public void clientRegistrationRepositoryBeanShouldBeCreatedWhenPropertiesPresent()
-			throws Exception {
+	public void clientRegistrationRepositoryBeanShouldBeCreatedWhenPropertiesPresent() {
 		this.contextRunner
 				.withUserConfiguration(
 						OAuth2ClientRegistrationRepositoryConfiguration.class)
 				.withPropertyValues(REGISTRATION_PREFIX + ".foo.client-id=abcd",
 						REGISTRATION_PREFIX + ".foo.client-secret=secret",
 						REGISTRATION_PREFIX + ".foo.provider=github")
-				.run(context -> {
+				.run((context) -> {
 					ClientRegistrationRepository repository = context
 							.getBean(ClientRegistrationRepository.class);
 					ClientRegistration registration = repository

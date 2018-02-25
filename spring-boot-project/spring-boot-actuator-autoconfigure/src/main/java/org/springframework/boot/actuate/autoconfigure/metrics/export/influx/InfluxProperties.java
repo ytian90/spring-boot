@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,71 +16,62 @@
 
 package org.springframework.boot.actuate.autoconfigure.metrics.export.influx;
 
-import java.time.Duration;
-
 import io.micrometer.influx.InfluxConsistency;
 
-import org.springframework.boot.actuate.autoconfigure.metrics.export.StepRegistryProperties;
+import org.springframework.boot.actuate.autoconfigure.metrics.export.properties.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * {@link ConfigurationProperties} for configuring Influx metrics export.
  *
  * @author Jon Schneider
+ * @author Stephane Nicoll
  * @since 2.0.0
  */
-@ConfigurationProperties(prefix = "spring.metrics.influx")
+@ConfigurationProperties(prefix = "management.metrics.export.influx")
 public class InfluxProperties extends StepRegistryProperties {
-	/**
-	 * The tag that will be mapped to "host" when shipping metrics to Influx, or
-	 * {@code null} if host should be omitted on publishing.
-	 */
-	private String db;
 
 	/**
-	 * The write consistency for each point.
+	 * Tag that will be mapped to "host" when shipping metrics to Influx.
 	 */
-	private InfluxConsistency consistency;
+	private String db = "mydb";
 
 	/**
-	 * Authenticate requests with this user. If not specified, the registry will not
-	 * attempt to present credentials to Influx.
+	 * Write consistency for each point.
+	 */
+	private InfluxConsistency consistency = InfluxConsistency.ONE;
+
+	/**
+	 * Login user of the Influx server.
 	 */
 	private String userName;
 
 	/**
-	 * Authenticate requests with this password.
+	 * Login password of the Influx server.
 	 */
 	private String password;
 
 	/**
-	 * Influx writes to the DEFAULT retention policy if one is not specified.
+	 * Retention policy to use (Influx writes to the DEFAULT retention policy if one is
+	 * not specified).
 	 */
 	private String retentionPolicy;
 
 	/**
-	 * The URI for the Influx backend.
+	 * URI of the Influx server.
 	 */
-	private String uri;
+	private String uri = "http://localhost:8086";
 
 	/**
-	 * Enable GZIP compression of metrics batches published to Influx.
+	 * Whether to enable GZIP compression of metrics batches published to Influx.
 	 */
-	private Boolean compressed;
+	private boolean compressed = true;
 
 	/**
-	 * The bucket filter clamping the bucket domain of timer percentiles histograms to
-	 * some max value. This is used to limit the number of buckets shipped to Prometheus
-	 * to save on storage.
+	 * Whether to create the Influx database if it does not exist before attempting to
+	 * publish metrics to it.
 	 */
-	private Duration timerPercentilesMax = Duration.ofMinutes(2);
-
-	/**
-	 * The bucket filter clamping the bucket domain of timer percentiles histograms to
-	 * some min value. This is used to limit the number of buckets shipped to Prometheus
-	 * to save on storage.
-	 */
-	private Duration timerPercentilesMin = Duration.ofMillis(10);
+	private boolean autoCreateDb = true;
 
 	public String getDb() {
 		return this.db;
@@ -130,27 +121,20 @@ public class InfluxProperties extends StepRegistryProperties {
 		this.uri = uri;
 	}
 
-	public Boolean getCompressed() {
+	public boolean isCompressed() {
 		return this.compressed;
 	}
 
-	public void setCompressed(Boolean compressed) {
+	public void setCompressed(boolean compressed) {
 		this.compressed = compressed;
 	}
 
-	public Duration getTimerPercentilesMax() {
-		return this.timerPercentilesMax;
+	public boolean isAutoCreateDb() {
+		return this.autoCreateDb;
 	}
 
-	public void setTimerPercentilesMax(Duration timerPercentilesMax) {
-		this.timerPercentilesMax = timerPercentilesMax;
+	public void setAutoCreateDb(boolean autoCreateDb) {
+		this.autoCreateDb = autoCreateDb;
 	}
 
-	public Duration getTimerPercentilesMin() {
-		return this.timerPercentilesMin;
-	}
-
-	public void setTimerPercentilesMin(Duration timerPercentilesMin) {
-		this.timerPercentilesMin = timerPercentilesMin;
-	}
 }

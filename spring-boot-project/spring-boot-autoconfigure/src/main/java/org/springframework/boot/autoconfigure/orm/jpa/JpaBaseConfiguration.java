@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import java.util.Map;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -51,6 +54,8 @@ import org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor;
 import org.springframework.orm.jpa.vendor.AbstractJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.jta.JtaTransactionManager;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -130,7 +135,8 @@ public abstract class JpaBaseConfiguration implements BeanFactoryAware {
 		Map<String, Object> vendorProperties = getVendorProperties();
 		customizeVendorProperties(vendorProperties);
 		return factoryBuilder.dataSource(this.dataSource).packages(getPackagesToScan())
-				.properties(vendorProperties).jta(isJta()).build();
+				.properties(vendorProperties).mappingResources(getMappingResources())
+				.jta(isJta()).build();
 	}
 
 	protected abstract AbstractJpaVendorAdapter createJpaVendorAdapter();
@@ -155,7 +161,13 @@ public abstract class JpaBaseConfiguration implements BeanFactoryAware {
 		if (packages.isEmpty() && AutoConfigurationPackages.has(this.beanFactory)) {
 			packages = AutoConfigurationPackages.get(this.beanFactory);
 		}
-		return packages.toArray(new String[packages.size()]);
+		return StringUtils.toStringArray(packages);
+	}
+
+	private String[] getMappingResources() {
+		List<String> mappingResources = this.properties.getMappingResources();
+		return (!ObjectUtils.isEmpty(mappingResources)
+				? StringUtils.toStringArray(mappingResources) : null);
 	}
 
 	/**
@@ -208,8 +220,23 @@ public abstract class JpaBaseConfiguration implements BeanFactoryAware {
 		@Configuration
 		protected static class JpaWebMvcConfiguration implements WebMvcConfigurer {
 
+			private static final Log logger = LogFactory
+					.getLog(JpaWebMvcConfiguration.class);
+
+			private final JpaProperties jpaProperties;
+
+			protected JpaWebMvcConfiguration(JpaProperties jpaProperties) {
+				this.jpaProperties = jpaProperties;
+			}
+
 			@Bean
 			public OpenEntityManagerInViewInterceptor openEntityManagerInViewInterceptor() {
+				if (this.jpaProperties.getOpenInView() == null) {
+					logger.warn("spring.jpa.open-in-view is enabled by default. "
+							+ "Therefore, database queries may be performed during view "
+							+ "rendering. Explicitly configure "
+							+ "spring.jpa.open-in-view to disable this warning");
+				}
 				return new OpenEntityManagerInViewInterceptor();
 			}
 

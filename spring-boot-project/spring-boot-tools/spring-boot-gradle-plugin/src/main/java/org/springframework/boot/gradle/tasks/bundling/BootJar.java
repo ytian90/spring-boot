@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class BootJar extends Jar implements BootArchive {
 
 	private FileCollection classpath;
 
-	private String mainClass;
+	private String mainClassName;
 
 	/**
 	 * Creates a new {@code BootJar} task.
@@ -50,8 +50,8 @@ public class BootJar extends Jar implements BootArchive {
 	public BootJar() {
 		CopySpec bootInf = getRootSpec().addChildBeforeSpec(getMainSpec())
 				.into("BOOT-INF");
-		bootInf.into("lib", classpathFiles(File::isFile));
 		bootInf.into("classes", classpathFiles(File::isDirectory));
+		bootInf.into("lib", classpathFiles(File::isFile));
 	}
 
 	private Action<CopySpec> classpathFiles(Spec<File> filter) {
@@ -63,7 +63,7 @@ public class BootJar extends Jar implements BootArchive {
 
 	@Override
 	public void copy() {
-		this.support.configureManifest(this, getMainClass());
+		this.support.configureManifest(this, getMainClassName());
 		super.copy();
 	}
 
@@ -73,13 +73,13 @@ public class BootJar extends Jar implements BootArchive {
 	}
 
 	@Override
-	public String getMainClass() {
-		return this.mainClass;
+	public String getMainClassName() {
+		return this.mainClassName;
 	}
 
 	@Override
-	public void setMainClass(String mainClass) {
-		this.mainClass = mainClass;
+	public void setMainClassName(String mainClassName) {
+		this.mainClassName = mainClassName;
 	}
 
 	@Override

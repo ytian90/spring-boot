@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ public class SpringBootExtension {
 
 	private final Project project;
 
+	private String mainClassName;
+
 	/**
 	 * Creates a new {@code SpringBootPluginExtension} that is associated with the given
 	 * {@code project}.
@@ -47,6 +49,24 @@ public class SpringBootExtension {
 	 */
 	public SpringBootExtension(Project project) {
 		this.project = project;
+	}
+
+	/**
+	 * Returns the main class name of the application.
+	 *
+	 * @return the name of the application's main class
+	 */
+	public String getMainClassName() {
+		return this.mainClassName;
+	}
+
+	/**
+	 * Sets the main class name of the application.
+	 *
+	 * @param mainClassName the name of the application's main class
+	 */
+	public void setMainClassName(String mainClassName) {
+		this.mainClassName = mainClassName;
 	}
 
 	/**
@@ -86,9 +106,9 @@ public class SpringBootExtension {
 					properties.setArtifact(determineArtifactBaseName());
 				}
 			});
-			bootBuildInfo.setDestinationDir(this.project
-					.provider(() -> new File(determineMainSourceSetResourcesOutputDir(),
-							"META-INF")));
+			bootBuildInfo.getConventionMapping().map("destinationDir",
+					() -> new File(determineMainSourceSetResourcesOutputDir(),
+							"META-INF"));
 		});
 		if (configurer != null) {
 			configurer.execute(bootBuildInfo);

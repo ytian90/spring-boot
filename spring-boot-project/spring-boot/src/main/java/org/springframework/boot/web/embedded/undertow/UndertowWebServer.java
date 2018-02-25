@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * {@link WebServer} that can be used to control a Undertow web server. Usually this class
- * should be created using the {@link UndertowReactiveWebServerFactory} and not directly.
+ * {@link WebServer} that can be used to control an Undertow web server. Usually this
+ * class should be created using the {@link UndertowReactiveWebServerFactory} and not
+ * directly.
  *
  * @author Ivan Sopov
  * @author Andy Wilkinson
@@ -88,17 +89,33 @@ public class UndertowWebServer implements WebServer {
 						.info("Undertow started on port(s) " + getPortsDescription());
 			}
 			catch (Exception ex) {
-				if (findBindException(ex) != null) {
-					List<UndertowWebServer.Port> failedPorts = getConfiguredPorts();
-					List<UndertowWebServer.Port> actualPorts = getActualPorts();
-					failedPorts.removeAll(actualPorts);
-					if (failedPorts.size() == 1) {
-						throw new PortInUseException(
-								failedPorts.iterator().next().getNumber());
+				try {
+					if (findBindException(ex) != null) {
+						List<UndertowWebServer.Port> failedPorts = getConfiguredPorts();
+						List<UndertowWebServer.Port> actualPorts = getActualPorts();
+						failedPorts.removeAll(actualPorts);
+						if (failedPorts.size() == 1) {
+							throw new PortInUseException(
+									failedPorts.iterator().next().getNumber());
+						}
 					}
+					throw new WebServerException("Unable to start embedded Undertow", ex);
 				}
-				throw new WebServerException("Unable to start embedded Undertow", ex);
+				finally {
+					stopSilently();
+				}
 			}
+		}
+	}
+
+	private void stopSilently() {
+		try {
+			if (this.undertow != null) {
+				this.undertow.stop();
+			}
+		}
+		catch (Exception ex) {
+			// Ignore
 		}
 	}
 
@@ -216,7 +233,7 @@ public class UndertowWebServer implements WebServer {
 	/**
 	 * An active Undertow port.
 	 */
-	private final static class Port {
+	private static final class Port {
 
 		private final int number;
 

@@ -24,7 +24,6 @@ import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactsFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class DependencyFilterMojoTests {
 	@Test
 	public void filterDependencies() throws MojoExecutionException {
 		TestableDependencyFilterMojo mojo = new TestableDependencyFilterMojo(
-				Collections.<Exclude>emptyList(), "com.foo", "exclude-id");
+				Collections.emptyList(), "com.foo", "exclude-id");
 
 		Artifact artifact = createArtifact("com.bar", "one");
 		Set<Artifact> artifacts = mojo.filterDependencies(
@@ -56,7 +55,7 @@ public class DependencyFilterMojoTests {
 	@Test
 	public void filterGroupIdExactMatch() throws MojoExecutionException {
 		TestableDependencyFilterMojo mojo = new TestableDependencyFilterMojo(
-				Collections.<Exclude>emptyList(), "com.foo", "");
+				Collections.emptyList(), "com.foo", "");
 
 		Artifact artifact = createArtifact("com.foo.bar", "one");
 		Set<Artifact> artifacts = mojo.filterDependencies(
@@ -69,7 +68,7 @@ public class DependencyFilterMojoTests {
 	@Test
 	public void filterScopeKeepOrder() throws MojoExecutionException {
 		TestableDependencyFilterMojo mojo = new TestableDependencyFilterMojo(
-				Collections.<Exclude>emptyList(), "", "",
+				Collections.emptyList(), "", "",
 				new ScopeFilter(null, Artifact.SCOPE_SYSTEM));
 		Artifact one = createArtifact("com.foo", "one");
 		Artifact two = createArtifact("com.foo", "two", Artifact.SCOPE_SYSTEM);
@@ -81,7 +80,7 @@ public class DependencyFilterMojoTests {
 	@Test
 	public void filterArtifactIdKeepOrder() throws MojoExecutionException {
 		TestableDependencyFilterMojo mojo = new TestableDependencyFilterMojo(
-				Collections.<Exclude>emptyList(), "", "one,three");
+				Collections.emptyList(), "", "one,three");
 		Artifact one = createArtifact("com.foo", "one");
 		Artifact two = createArtifact("com.foo", "two");
 		Artifact three = createArtifact("com.foo", "three");
@@ -93,7 +92,7 @@ public class DependencyFilterMojoTests {
 	@Test
 	public void filterGroupIdKeepOrder() throws MojoExecutionException {
 		TestableDependencyFilterMojo mojo = new TestableDependencyFilterMojo(
-				Collections.<Exclude>emptyList(), "com.foo", "");
+				Collections.emptyList(), "com.foo", "");
 		Artifact one = createArtifact("com.foo", "one");
 		Artifact two = createArtifact("com.bar", "two");
 		Artifact three = createArtifact("com.bar", "three");
@@ -153,7 +152,7 @@ public class DependencyFilterMojoTests {
 		}
 
 		@Override
-		public void execute() throws MojoExecutionException, MojoFailureException {
+		public void execute() {
 
 		}
 

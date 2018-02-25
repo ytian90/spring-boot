@@ -33,13 +33,15 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.admin.SpringApplicationAdminMXBeanRegistrar;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jmx.export.MBeanExporter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -62,12 +64,12 @@ public class SpringApplicationAdminJmxAutoConfigurationTests {
 	private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-			.withConfiguration(AutoConfigurations.of(JmxAutoConfiguration.class,
-					SpringApplicationAdminJmxAutoConfiguration.class));
+			.withConfiguration(
+					AutoConfigurations.of(MultipleMBeanExportersConfiguration.class,
+							SpringApplicationAdminJmxAutoConfiguration.class));
 
 	@Test
-	public void notRegisteredByDefault()
-			throws MalformedObjectNameException, InstanceNotFoundException {
+	public void notRegisteredByDefault() {
 		this.contextRunner.run((context) -> {
 			this.thrown.expect(InstanceNotFoundException.class);
 			this.server.getObjectInstance(createDefaultObjectName());
@@ -75,7 +77,7 @@ public class SpringApplicationAdminJmxAutoConfigurationTests {
 	}
 
 	@Test
-	public void registeredWithProperty() throws Exception {
+	public void registeredWithProperty() {
 		this.contextRunner.withPropertyValues(ENABLE_ADMIN_PROP).run((context) -> {
 			ObjectName objectName = createDefaultObjectName();
 			ObjectInstance objectInstance = this.server.getObjectInstance(objectName);
@@ -85,7 +87,7 @@ public class SpringApplicationAdminJmxAutoConfigurationTests {
 	}
 
 	@Test
-	public void registerWithCustomJmxName() throws InstanceNotFoundException {
+	public void registerWithCustomJmxName() {
 		String customJmxName = "org.acme:name=FooBar";
 		this.contextRunner
 				.withSystemProperties(
@@ -108,7 +110,7 @@ public class SpringApplicationAdminJmxAutoConfigurationTests {
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder()
 				.sources(ServletWebServerFactoryAutoConfiguration.class,
 						DispatcherServletAutoConfiguration.class,
-						JmxAutoConfiguration.class,
+						MultipleMBeanExportersConfiguration.class,
 						SpringApplicationAdminJmxAutoConfiguration.class)
 				.run("--" + ENABLE_ADMIN_PROP, "--server.port=0")) {
 			assertThat(context).isInstanceOf(ServletWebServerApplicationContext.class);
@@ -122,12 +124,13 @@ public class SpringApplicationAdminJmxAutoConfigurationTests {
 	}
 
 	@Test
-	public void onlyRegisteredOnceWhenThereIsAChildContext() throws Exception {
+	public void onlyRegisteredOnceWhenThereIsAChildContext() {
 		SpringApplicationBuilder parentBuilder = new SpringApplicationBuilder()
-				.web(WebApplicationType.NONE).sources(JmxAutoConfiguration.class,
+				.web(WebApplicationType.NONE)
+				.sources(MultipleMBeanExportersConfiguration.class,
 						SpringApplicationAdminJmxAutoConfiguration.class);
 		SpringApplicationBuilder childBuilder = parentBuilder
-				.child(JmxAutoConfiguration.class,
+				.child(MultipleMBeanExportersConfiguration.class,
 						SpringApplicationAdminJmxAutoConfiguration.class)
 				.web(WebApplicationType.NONE);
 		try (ConfigurableApplicationContext parent = parentBuilder
@@ -158,6 +161,21 @@ public class SpringApplicationAdminJmxAutoConfigurationTests {
 	private String getProperty(ObjectName objectName, String key) throws Exception {
 		return (String) this.server.invoke(objectName, "getProperty",
 				new Object[] { key }, new String[] { String.class.getName() });
+	}
+
+	@Configuration
+	static class MultipleMBeanExportersConfiguration {
+
+		@Bean
+		public MBeanExporter firstMBeanExporter() {
+			return new MBeanExporter();
+		}
+
+		@Bean
+		public MBeanExporter secondMBeanExporter() {
+			return new MBeanExporter();
+		}
+
 	}
 
 }

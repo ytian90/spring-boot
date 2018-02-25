@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,36 @@ package org.springframework.boot.actuate.endpoint.web.test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import javax.ws.rs.core.MediaType;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.model.Resource;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 
-import org.springframework.boot.actuate.endpoint.convert.ConversionServiceOperationParameterMapper;
 import org.springframework.boot.actuate.endpoint.http.ActuatorMediaType;
-import org.springframework.boot.actuate.endpoint.web.annotation.WebAnnotationEndpointDiscoverer;
+import org.springframework.boot.actuate.endpoint.invoke.convert.ConversionServiceParameterValueMapper;
+import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
+import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
+import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
+import org.springframework.boot.actuate.endpoint.web.PathMapper;
+import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpointDiscoverer;
 import org.springframework.boot.actuate.endpoint.web.jersey.JerseyEndpointResourceFactory;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jersey.JerseyAutoConfiguration;
 import org.springframework.boot.autoconfigure.jersey.ResourceConfigCustomizer;
-import org.springframework.boot.endpoint.web.EndpointMapping;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
+import org.springframework.util.ClassUtils;
 
 /**
  * {@link BlockJUnit4ClassRunner} for Jersey.
@@ -58,7 +64,7 @@ class JerseyEndpointsRunner extends AbstractWebEndpointRunner {
 	private static ConfigurableApplicationContext createContext(List<Class<?>> classes) {
 		AnnotationConfigServletWebServerApplicationContext context = new AnnotationConfigServletWebServerApplicationContext();
 		classes.add(JerseyEndpointConfiguration.class);
-		context.register(classes.toArray(new Class<?>[classes.size()]));
+		context.register(ClassUtils.toClassArray(classes));
 		context.refresh();
 		return context;
 	}
@@ -90,15 +96,18 @@ class JerseyEndpointsRunner extends AbstractWebEndpointRunner {
 		}
 
 		private void customize(ResourceConfig config) {
-			List<String> mediaTypes = Arrays.asList(MediaType.APPLICATION_JSON_VALUE,
+			List<String> mediaTypes = Arrays.asList(MediaType.APPLICATION_JSON,
 					ActuatorMediaType.V2_JSON);
-			WebAnnotationEndpointDiscoverer discoverer = new WebAnnotationEndpointDiscoverer(
-					this.applicationContext,
-					new ConversionServiceOperationParameterMapper(), (id) -> null,
-					mediaTypes, mediaTypes);
+			EndpointMediaTypes endpointMediaTypes = new EndpointMediaTypes(mediaTypes,
+					mediaTypes);
+			WebEndpointDiscoverer discoverer = new WebEndpointDiscoverer(
+					this.applicationContext, new ConversionServiceParameterValueMapper(),
+					endpointMediaTypes, PathMapper.useEndpointId(),
+					Collections.emptyList(), Collections.emptyList());
 			Collection<Resource> resources = new JerseyEndpointResourceFactory()
-					.createEndpointResources(new EndpointMapping("/application"),
-							discoverer.discoverEndpoints());
+					.createEndpointResources(new EndpointMapping("/actuator"),
+							discoverer.getEndpoints(), endpointMediaTypes,
+							new EndpointLinksResolver(discoverer.getEndpoints()));
 			config.registerResources(new HashSet<>(resources));
 		}
 

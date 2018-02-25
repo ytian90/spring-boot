@@ -57,33 +57,6 @@ public class BootRunIntegrationTests {
 	}
 
 	@Test
-	public void argsCanBeConfigured() throws IOException {
-		copyApplication();
-		new File(this.gradleBuild.getProjectDir(), "src/main/resources").mkdirs();
-		BuildResult result = this.gradleBuild.build("bootRun");
-		assertThat(result.task(":bootRun").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
-		assertThat(result.getOutput()).contains("--com.example.foo=bar");
-	}
-
-	@Test
-	public void jvmArgsCanBeConfigured() throws IOException {
-		copyApplication();
-		new File(this.gradleBuild.getProjectDir(), "src/main/resources").mkdirs();
-		BuildResult result = this.gradleBuild.build("bootRun");
-		assertThat(result.task(":bootRun").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
-		assertThat(result.getOutput()).contains("-Dcom.example.foo=bar");
-	}
-
-	@Test
-	public void execSpecCanBeConfigured() throws IOException {
-		copyApplication();
-		new File(this.gradleBuild.getProjectDir(), "src/main/resources").mkdirs();
-		BuildResult result = this.gradleBuild.build("bootRun");
-		assertThat(result.task(":bootRun").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
-		assertThat(result.getOutput()).contains("-Dcom.example.foo=bar");
-	}
-
-	@Test
 	public void sourceResourcesCanBeUsed() throws IOException {
 		copyApplication();
 		BuildResult result = this.gradleBuild.build("bootRun");
@@ -94,6 +67,15 @@ public class BootRunIntegrationTests {
 				.contains("2. " + canonicalPathOf("build/classes/java/main"));
 		assertThat(result.getOutput())
 				.doesNotContain(canonicalPathOf("build/resources/main"));
+	}
+
+	@Test
+	public void springBootExtensionMainClassNameIsUsed() throws IOException {
+		BuildResult result = this.gradleBuild.build("echoMainClassName");
+		assertThat(result.task(":echoMainClassName").getOutcome())
+				.isEqualTo(TaskOutcome.UP_TO_DATE);
+		assertThat(result.getOutput())
+				.contains("Main class name = com.example.CustomMainClass");
 	}
 
 	@Test

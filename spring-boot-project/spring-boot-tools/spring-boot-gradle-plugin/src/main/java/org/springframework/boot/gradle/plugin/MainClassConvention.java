@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 
+import org.springframework.boot.gradle.dsl.SpringBootExtension;
 import org.springframework.boot.loader.tools.MainClassFinder;
 
 /**
@@ -32,7 +33,7 @@ import org.springframework.boot.loader.tools.MainClassFinder;
  *
  * @author Andy Wilkinson
  */
-final class MainClassConvention implements Callable<String> {
+final class MainClassConvention implements Callable<Object> {
 
 	private static final String SPRING_BOOT_APPLICATION_CLASS_NAME = "org.springframework.boot.autoconfigure.SpringBootApplication";
 
@@ -46,11 +47,17 @@ final class MainClassConvention implements Callable<String> {
 	}
 
 	@Override
-	public String call() throws Exception {
+	public Object call() throws Exception {
+		SpringBootExtension springBootExtension = this.project.getExtensions()
+				.findByType(SpringBootExtension.class);
+		if (springBootExtension != null
+				&& springBootExtension.getMainClassName() != null) {
+			return springBootExtension.getMainClassName();
+		}
 		if (this.project.hasProperty("mainClassName")) {
 			Object mainClassName = this.project.property("mainClassName");
 			if (mainClassName != null) {
-				return mainClassName.toString();
+				return mainClassName;
 			}
 		}
 		return resolveMainClass();

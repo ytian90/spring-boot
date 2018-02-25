@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,14 +228,14 @@ class ImportsContextCustomizer implements ContextCustomizer {
 
 		private static final Class<?>[] NO_IMPORTS = {};
 
-		private static final Set<AnnotationFilter> annotationFilters;
+		private static final Set<AnnotationFilter> ANNOTATION_FILTERS;
 
 		static {
 			Set<AnnotationFilter> filters = new HashSet<>();
 			filters.add(new JavaLangAnnotationFilter());
 			filters.add(new KotlinAnnotationFilter());
 			filters.add(new SpockAnnotationFilter());
-			annotationFilters = Collections.unmodifiableSet(filters);
+			ANNOTATION_FILTERS = Collections.unmodifiableSet(filters);
 		}
 
 		private final Set<Object> key;
@@ -245,7 +245,7 @@ class ImportsContextCustomizer implements ContextCustomizer {
 			Set<Class<?>> seen = new HashSet<>();
 			collectClassAnnotations(testClass, annotations, seen);
 			Set<Object> determinedImports = determineImports(annotations, testClass);
-			this.key = Collections.<Object>unmodifiableSet(
+			this.key = Collections.unmodifiableSet(
 					determinedImports != null ? determinedImports : annotations);
 		}
 
@@ -274,7 +274,7 @@ class ImportsContextCustomizer implements ContextCustomizer {
 		}
 
 		private boolean isIgnoredAnnotation(Annotation annotation) {
-			for (AnnotationFilter annotationFilter : annotationFilters) {
+			for (AnnotationFilter annotationFilter : ANNOTATION_FILTERS) {
 				if (annotationFilter.isIgnored(annotation)) {
 					return true;
 				}
@@ -321,7 +321,7 @@ class ImportsContextCustomizer implements ContextCustomizer {
 				return null;
 			}
 			// The source itself is the import
-			return Collections.<Object>singleton(source.getName());
+			return Collections.singleton(source.getName());
 		}
 
 		@SuppressWarnings("unchecked")
@@ -346,7 +346,7 @@ class ImportsContextCustomizer implements ContextCustomizer {
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj != null && getClass().equals(obj.getClass())
+			return (obj != null && getClass() == obj.getClass()
 					&& this.key.equals(((ContextCustomizerKey) obj).key));
 		}
 
